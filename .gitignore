@@ -1,0 +1,19 @@
+# Secrets & credentials
+.credentials.json
+settings.local.json
+
+# Runtime data
+cache/
+sessions/
+history.jsonl
+shell-snapshots/
+file-history/
+backups/
+downloads/
+plans/
+__pycache__/
+*.pyc
+
+# Plugin installs (auto-managed)
+plugins/
+projects/

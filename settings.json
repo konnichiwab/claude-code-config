@@ -1,0 +1,7 @@
+{
+  "autoUpdatesChannel": "latest",
+  "statusLine": {
+    "type": "command",
+    "command": "bash C:/Users/mjjkl/.claude/statusline-command.sh"
+  }
+}
