@@ -333,7 +333,6 @@ def main():
         else:
             render_shells(sel_sh,shells,confirm_pid)
 
-    shells=get_shells()
     full_render()
 
     while True:

@@ -4,10 +4,10 @@ description: Opens the Claude Code interactive settings menu
 allowed-tools: Bash
 ---
 
-Open the settings menu in a new terminal window by running this exact bash command:
+Open the settings menu in Windows Terminal by running this exact bash command:
 
 ```bash
-start cmd /K "python C:\Users\mjjkl\.claude\settings-menu.py"
+wt "C:\Users\mjjkl\AppData\Local\Programs\Python\Python311\python.exe" "C:\Users\mjjkl\.claude\settings-menu.py"
 ```
 
 Do not say anything else. Just run the command.
