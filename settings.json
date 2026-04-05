@@ -2,6 +2,15 @@
   "autoUpdatesChannel": "latest",
   "statusLine": {
     "type": "command",
-    "command": "bash C:/Users/mjjkl/.claude/statusline-command.sh"
+    "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "model": "sonnet",
+  "effortLevel": "medium",
+  "defaultPermissionMode": "plan",
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
   }
 }
