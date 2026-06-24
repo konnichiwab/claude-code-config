@@ -1,10 +1,10 @@
 ---
 name: process-invoices
-description: Process monthly invoices from Outlook inbox — classify, extract dates from PDFs, file to Dropbox, and move emails to vendor folders
-allowed-tools: Bash, Read, Write
+description: Process monthly invoices — Outlook inbox emails, KPN web invoices, and Dropbox subscription invoices — filing all PDFs to Dropbox and tidying Outlook
+allowed-tools: Bash, Read, Write, mcp__playwright__browser_navigate, mcp__playwright__browser_click, mcp__playwright__browser_snapshot, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_tabs, mcp__playwright__browser_run_code_unsafe, mcp__playwright__browser_evaluate
 ---
 
-Process monthly invoices from the Outlook inbox (marc.klootwijk@esconline.nl) by following these steps exactly.
+Process monthly invoices by completing all three sections below in order.
 
 ## Step 1 — Check dependencies
 
@@ -96,3 +96,73 @@ Show which emails were successfully filed and moved, and list any errors so the 
 - Copies the invoice PDF to `D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\{Inkoop\Q{n} or Verkoop}\` with filename `VENDOR originalfilename.pdf`
 - Renames the Outlook email subject to `VENDOR - original subject`
 - Moves the email from Inbox to the vendor subfolder (creates the subfolder if it doesn't exist yet)
+
+---
+
+## Section B — KPN invoices (mobile + internet)
+
+KPN does not send invoices by email. Download them from MijnKPN each cycle.
+
+### B1 — Navigate and log in
+
+Open: https://www.kpn.com/mijn/facturen
+
+The user must log in manually (requires phone 2FA). Wait for confirmation before proceeding.
+
+### B2 — Determine which invoices to download
+
+Ask the user which quarter is being processed, then determine the date range:
+- Q1: Jan–Mar, Q2: Apr–Jun, Q3: Jul–Sep, Q4: Oct–Dec
+
+### B3 — Download invoices
+
+On the Facturen page there are two subscriptions:
+- **06-36 59 93 96** — mobile phone
+- **Triangelweg 7** — home internet
+
+Click each `[aria-label="Factuur downloaden"]` button for invoices within the target quarter. Files download automatically to `.playwright-mcp\`.
+
+Downloaded filenames use dashes (e.g. `06-36-59-93-96-juni-2026.pdf`) but the originals use spaces (`06-36 59 93 96_juni_2026.pdf`). Map them when copying.
+
+### B4 — Save to Dropbox
+
+Copy each downloaded file to:
+```
+D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Inkoop\Q{n}\KPN {original_filename}
+```
+
+Example: `KPN 06-36 59 93 96_juni_2026.pdf`
+
+---
+
+## Section C — Dropbox subscription invoices
+
+Dropbox Essentials is billed monthly (~€16.52). Download invoices for the processed quarter.
+
+### C1 — Navigate and log in
+
+Open: https://www.dropbox.com/manage/billing
+
+The user must log in manually. Wait for confirmation before proceeding.
+
+### C2 — Download invoices as PDF
+
+For each invoice in the target quarter:
+1. Click the `...` (Open menu) button on the row
+2. Click **Invoice** — this opens a new tab with the invoice as a web page
+3. Switch to the new tab, wait for `networkidle`, then hide any modals/overlays:
+   ```js
+   document.querySelectorAll('[class*="modal"], [class*="overlay"], [class*="cookie"], [class*="banner"], [role="dialog"]')
+     .forEach(el => el.style.display = 'none');
+   ```
+4. Generate PDF using `page.pdf({ format: 'A4', printBackground: true })`
+5. Close the tab and repeat
+
+### C3 — Save to Dropbox
+
+Save each PDF to:
+```
+D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Inkoop\Q{n}\DROPBOX Dropbox Essentials_{month}_{year}.pdf
+```
+
+Example: `DROPBOX Dropbox Essentials_juni_2026.pdf`
