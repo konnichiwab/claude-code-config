@@ -1,0 +1,73 @@
+{
+  "_comment": "Bank counterparty rules for reconcile.py. Patterns are case-insensitive regexes on the bank NAME (or IBAN for 'iban'). Vendor values must match the PREFIX of the filed Dropbox PDF names (e.g. 'RAAD NOOTDORP 20260732.pdf').",
+  "private": {
+    "_comment": "Private withdrawals (prive-opnames): no invoice needed",
+    "iban": [
+      "NL98INGB0001895285",
+      "NL08REVO3253762722",
+      "NL57BUNQ2069770877"
+    ],
+    "name": [
+      "^MJJ KLOOTWIJK$",
+      "^Marc Jacobus Johannes Klootwijk$",
+      "^Gezamelijke Rekening$",
+      "^Lidl"
+    ],
+    "_accounts": {
+      "NL98INGB0001895285": "MJJ Klootwijk (ING)",
+      "NL08REVO3253762722": "Marc Klootwijk (Revolut)",
+      "NL57BUNQ2069770877": "personal bunq"
+    }
+  },
+  "internal": {
+    "_comment": "Transfers to own bunq VAT reserve sub-accounts (one per quarter): no invoice needed",
+    "iban": [
+      "NL09BUNQ2108301984",
+      "NL66BUNQ2108303189",
+      "NL77BUNQ2108305513",
+      "NL74BUNQ2108299165"
+    ],
+    "name": [],
+    "_accounts": {
+      "NL09BUNQ2108301984": "VAT reserve Q1",
+      "NL66BUNQ2108303189": "VAT reserve Q2",
+      "NL77BUNQ2108305513": "VAT reserve Q3",
+      "NL74BUNQ2108299165": "VAT reserve Q4"
+    }
+  },
+  "tax": {
+    "_comment": "Tax payments (aanslagen): no invoice, the accountant books them",
+    "name": [
+      "^Belastingdienst$"
+    ]
+  },
+  "vendors": {
+    "RANDSTAD": "RANDSTAD",
+    "AWS": "AWS",
+    "TWILIO": "SENDGRID",
+    "^bunq BV$": "BUNQ",
+    "SUPERGARANT": "SUPERGARANT",
+    "Microsoft": "MICROSOFT",
+    "Raad Nootdorp": "RAAD NOOTDORP",
+    "TransIP": "TRANSIP",
+    "ANTHROPIC": "ANTHROPIC",
+    "REPLIT": "REPLIT",
+    "^Dropbox": "DROPBOX",
+    "CURSOR": "CURSOR",
+    "SIMYO": "SIMYO",
+    "VERCEL": "VERCEL",
+    "^KPN": "KPN",
+    "Adobe": "ADOBE",
+    "OPENAI": "OPENAI",
+    "GITHUB": "GITHUB",
+    "GOOGLE": "GOOGLE",
+    "Coolblue": "COOLBLUE",
+    "Media ?Markt": "MEDIA MARKT"
+  },
+  "paid_privately": {
+    "_comment": "Invoice filename prefixes that are paid from a private account; the accountant allocates the business share. Not expected in the business bank.",
+    "prefixes": [
+      "KPN Triangelweg 7"
+    ]
+  }
+}

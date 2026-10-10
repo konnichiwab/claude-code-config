@@ -71,8 +71,8 @@ def extract_date_from_text(text):
         if month:
             return f"{m.group(3)}-{month:02d}-{int(m.group(1)):02d}"
 
-    # Pattern: "Factuurdatum: 16-06-2026" or "Factuurdatum : 1-6-2026"
-    m = re.search(r"Factuurdatum\s*:\s*(\d{1,2})-(\d{1,2})-(\d{4})", t, re.IGNORECASE)
+    # Pattern: "Factuurdatum: 16-06-2026", "Factuurdatum : 1-6-2026" or "Factuurdatum 08-04-2026"
+    m = re.search(r"Factuurdatum\s*:?\s*(\d{1,2})-(\d{1,2})-(\d{4})", t, re.IGNORECASE)
     if m:
         return f"{m.group(3)}-{int(m.group(2)):02d}-{int(m.group(1)):02d}"
 

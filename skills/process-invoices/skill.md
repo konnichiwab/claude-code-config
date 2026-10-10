@@ -192,3 +192,42 @@ D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Inkoop\Q{n}\DROPBOX Dropbox Essent
 ```
 
 Example: `DROPBOX Dropbox Essentials_juni_2026.pdf`
+
+---
+
+## Section D — Bank reconciliation ("cash is king")
+
+Run this after Sections A–C for the same quarter. Every transaction in the business bunq account (NL25BUNQ2044331845) must be explained, either by a filed invoice (inkoop or verkoop) or by a rule. **When in doubt, ask the user. Never guess.**
+
+### D1 — Bank statements
+
+The user exports bunq MT940 statements to `D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Bank\Q{n}\` (`YYYY-MM_bunq-statement.sta` + `.pdf`). If they aren't there yet, ask for them. `bank.transactions()` parses them. Sanity check: the transactions' sum must equal closing balance (`:62F:`) minus opening balance (`:60F:`) across the quarter.
+
+### D2 — Run
+
+```
+python "C:/Users/mjjkl/.claude/scripts/process-invoices/reconcile.py" 2026 3 [--verbose] [--csv out.csv]
+```
+
+Rules live in `reconcile_rules.json`:
+- **private** (prive-opnames): the user's own accounts (ING NL98…5285, Revolut NL08…2722, personal bunq NL57…0877), names MJJ KLOOTWIJK / Marc Jacobus Johannes Klootwijk / Gezamelijke Rekening, and Lidl.
+- **internal**: the bunq VAT-reserve sub-accounts, one per quarter (Q1 NL09…1984, Q2 NL66…3189, Q3 NL77…5513, Q4 NL74…9165).
+- **tax**: Belastingdienst. There's no invoice; the accountant books the aanslag.
+- **vendors**: a bank-name regex mapped to the Dropbox filename prefix. Note TWILIO = SENDGRID.
+- **paid_privately**: invoices paid from a private account whose business share the accountant allocates (KPN Triangelweg 7, home internet). These aren't expected in the business bank.
+
+How matching works:
+1. **Reference first**: the invoice number appears in the payment description (RAAD, TransIP, Randstad).
+2. **Then vendor + amount**: EUR, or the USD amount from the card description, which matches USD invoices. Card payments (no IBAN) must fall within ±5 days of the invoice date. Transfers and direct debits must come 7 days before to 35 days after it. If several invoices fit, the closest preceding one wins.
+3. **Scope**: invoices are scanned in the quarter's Inkoop folder plus the neighbouring quarters (including `Verwerkt door RAAD`) and Verkoop. A payment in Q3 for a Q2 invoice is normal and is reported with "(in …Q2…)".
+4. **Refunds**: a refund cancels the matching charge (status REFUNDED).
+
+### D3 — Report and follow up
+
+Present the output sections:
+- **MISSING INVOICE**: business payments without an invoice. Group them by vendor and tell the user where to get them, or offer to download them like Sections B and C.
+- **UNKNOWN**: counterparties that no rule covers. Ask the user, then add the answer to `reconcile_rules.json` (private, internal, or a vendor).
+- **INVOICES WITHOUT PAYMENT**: usually paid in the next quarter (e.g. a late-month direct debit). Flag anything older than ~5 weeks.
+- **PAID PRIVATELY**: listed for the accountant's information.
+
+Also flag any invoice that appears in two quarter folders: a duplicate filed twice, as happened with SendGrid in Q2 and Q3 2026. Ask which copy to keep; normally the copy RAAD has already received stays.
