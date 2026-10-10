@@ -254,3 +254,39 @@ python "C:/Users/mjjkl/.claude/scripts/process-invoices/fetch_stripe_invoices.py
 This keeps only invoices dated in that quarter and saves them as `Inkoop\Q{n}\OPENAI Invoice-{number}.pdf`. It skips files that already exist, including in `Verwerkt door RAAD`. It resolves each PDF through Stripe's public `invoicedata.stripe.com/invoice_pdf_file_url/{acct}/{token}` endpoint. Clicking "Download invoice" on the Stripe page closes the tab, so don't automate the button.
 
 The script works for any vendor billing through Stripe-hosted invoices. Change `vendor` in the JSON.
+
+---
+
+## Section F — Simyo invoices (mobile, 06-83492731)
+
+Simyo doesn't email invoices. Fetch them from https://mijn.simyo.nl/facturen and run this before Section D.
+
+**The timing quirk**: the portal labels each invoice with the *usage* month ("Juni 2026"). The PDF's **Factuurdatum** falls about a week into the next month (8 Jul), and the invoice also bills that next month's subscription (1–31 Jul). The direct debit follows around the 23rd. So the portal label is always one month behind. **File by the Factuurdatum on the PDF, never by the label.** The bank description carries the invoice number (`FACTUURNUMMER:96926985`), so Section D matches by reference.
+
+### F1 — Log in
+
+Open https://mijn.simyo.nl/facturen in the Playwright browser. The user logs in with phone number and password; wait for their confirmation. Each invoice is a link `/factuur/{number}`. The "huidige-maand" and "vorige-maand" entries aren't issued yet, so skip them. Older invoices are behind "Toon meer facturen".
+
+### F2 — Fetch the PDFs. NEVER click "Download".
+
+Clicking Simyo's Download button closes the whole Playwright browser and loses the login. Call the endpoint behind the button from inside the page instead, then write the result to disk with `browser_evaluate(..., filename=<tmp>/simyo.json)`:
+
+```js
+async () => {
+  const out = {list: [...document.querySelectorAll('a[href*="/factuur/"]')].map(a => ({href: a.getAttribute('href'), text: a.innerText.replace(/\s+/g,' ').trim()})), pdfs: {}};
+  for (const no of out.list.map(i => i.href.split('/').pop()).filter(n => /^\d+$/.test(n))) {
+    const b = new Uint8Array(await (await fetch('/api/get?endpoint=downloadPostpaidPdf&args=' + no, {credentials: 'include'})).arrayBuffer());
+    let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    out.pdfs[no] = btoa(s);
+  }
+  return JSON.stringify(out);
+}
+```
+
+### F3 — File them
+
+```
+python "C:/Users/mjjkl/.claude/scripts/process-invoices/file_simyo.py" <tmp>/simyo.json 2026 3
+```
+
+This reads each PDF's Factuurdatum and saves invoices in that quarter as `Inkoop\Q{n}\SIMYO Factuur {number}.pdf`. It skips existing files, including in `Verwerkt door RAAD`, and lists invoices from other quarters as SKIP.
