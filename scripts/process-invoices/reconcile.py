@@ -33,8 +33,8 @@ def load_rules():
 
 
 def classify(t, rules):
-    """(kind, vendor): kind is private/internal/tax/vendor/unknown."""
-    for kind in ("private", "internal", "tax"):
+    """(kind, vendor): kind is private/internal/tax/fees/vendor/unknown."""
+    for kind in ("private", "internal", "tax", "fees"):
         r = rules.get(kind, {})
         if t["iban"] and t["iban"] in r.get("iban", []):
             return kind, None
@@ -180,7 +180,7 @@ def main():
             status = "OK"
         elif n in refunded:
             status = "REFUNDED"
-        elif kind in ("private", "internal", "tax"):
+        elif kind in ("private", "internal", "tax", "fees"):
             status = kind.upper()
         else:
             status = "MISSING INVOICE" if kind == "vendor" else "UNKNOWN"
@@ -199,14 +199,14 @@ def main():
             and i["date"] and (int(i["date"][5:7]) - 1) // 3 + 1 == quarter))]
 
     # Report
-    order = ["MISSING INVOICE", "UNKNOWN", "OK", "REFUNDED", "PRIVATE", "INTERNAL", "TAX"]
+    order = ["MISSING INVOICE", "UNKNOWN", "OK", "REFUNDED", "PRIVATE", "INTERNAL", "TAX", "FEES"]
     print(f"Reconciliation {year} Q{quarter}: {len(txns)} bank transactions, {len(invoices)} invoices scanned\n")
     for st in order:
         sel = [r for r in rows if r["status"] == st]
         if not sel:
             continue
         print(f"== {st} ({len(sel)}, total EUR {sum(r['amount'] for r in sel):.2f})")
-        if st in ("OK", "PRIVATE", "INTERNAL", "TAX") and "--verbose" not in sys.argv:
+        if st in ("OK", "PRIVATE", "INTERNAL", "TAX", "FEES") and "--verbose" not in sys.argv:
             continue
         for r in sel:
             usd = f" (${r['usd']})" if r["usd"] else ""

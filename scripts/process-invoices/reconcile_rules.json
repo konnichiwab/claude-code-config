@@ -45,7 +45,6 @@
     "RANDSTAD": "RANDSTAD",
     "AWS": "AWS",
     "TWILIO": "SENDGRID",
-    "^bunq BV$": "BUNQ",
     "SUPERGARANT": "SUPERGARANT",
     "Microsoft": "MICROSOFT",
     "Raad Nootdorp": "RAAD NOOTDORP",
@@ -68,6 +67,12 @@
     "_comment": "Invoice filename prefixes that are paid from a private account; the accountant allocates the business share. Not expected in the business bank.",
     "prefixes": [
       "KPN Triangelweg 7"
+    ]
+  },
+  "fees": {
+    "_comment": "Bank fees: no invoice exists (bunq subscription/transaction costs)",
+    "name": [
+      "^bunq BV$"
     ]
   }
 }

@@ -213,6 +213,7 @@ Rules live in `reconcile_rules.json`:
 - **private** (prive-opnames): the user's own accounts (ING NL98…5285, Revolut NL08…2722, personal bunq NL57…0877), names MJJ KLOOTWIJK / Marc Jacobus Johannes Klootwijk / Gezamelijke Rekening, and Lidl.
 - **internal**: the bunq VAT-reserve sub-accounts, one per quarter (Q1 NL09…1984, Q2 NL66…3189, Q3 NL77…5513, Q4 NL74…9165).
 - **tax**: Belastingdienst. There's no invoice; the accountant books the aanslag.
+- **fees**: bunq BV bank fees. These never come with an invoice.
 - **vendors**: a bank-name regex mapped to the Dropbox filename prefix. Note TWILIO = SENDGRID.
 - **paid_privately**: invoices paid from a private account whose business share the accountant allocates (KPN Triangelweg 7, home internet). These aren't expected in the business bank.
 
