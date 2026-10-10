@@ -120,18 +120,23 @@ On the Facturen page there are two subscriptions:
 - **06-36 59 93 96** — mobile phone
 - **Triangelweg 7** — home internet
 
-Click each `[aria-label="Factuur downloaden"]` button for invoices within the target quarter. Files download automatically to `.playwright-mcp\`.
+Each invoice row has a button named `Factuur downloaden {subscription} - {dd maand yyyy}` (e.g. `Factuur downloaden Triangelweg 7 - 09 juli 2026`). The list sits inside an iframe, so a plain `document.querySelectorAll` on the top page finds nothing — use `browser_run_code_unsafe` and search `page.frames()` for `getByRole('button', { name: ... })`. Wrap each click in `page.waitForEvent('download')` and `saveAs()` to a temp folder.
 
-Downloaded filenames use dashes (e.g. `06-36-59-93-96-juni-2026.pdf`) but the originals use spaces (`06-36 59 93 96_juni_2026.pdf`). Map them when copying.
+KPN's own filenames (`suggestedFilename()`, as of Q3 2026) look like:
+- `KPN_2026_juli_06-36599396.pdf`
+- `KPN_2026_juli_Triangelweg 7.pdf`
+
+(Playwright's auto-saved copy in `.playwright-mcp\` additionally replaces spaces/underscores with dashes — ignore that copy.) Don't use these names as-is; rename per B4.
 
 ### B4 — Save to Dropbox
 
-Copy each downloaded file to:
+Save each file under the established naming convention (matches earlier quarters):
 ```
-D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Inkoop\Q{n}\KPN {original_filename}
+D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Inkoop\Q{n}\KPN 06-36 59 93 96_{maand}_{year}.pdf
+D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Inkoop\Q{n}\KPN Triangelweg 7_{maand}_{year}.pdf
 ```
 
-Example: `KPN 06-36 59 93 96_juni_2026.pdf`
+Month names are Dutch lowercase (`juli`, `augustus`, `september`). Use `cp -n` so existing files are never overwritten, and check `Q{n}\Verwerkt door RAAD\` first — files there have already been handed to the accountant.
 
 ---
 
@@ -147,8 +152,10 @@ The user must log in manually. Wait for confirmation before proceeding.
 
 ### C2 — Download invoices as PDF
 
+The billing table is built from `div[role="row"]` elements, not `<tr>`. Each row has `data-testid="billing-history-table-row-{i}"` (row 0 = most recent), and its description is in `[data-testid="billing-history-table-row-{i}-description"]`, e.g. `Dropbox Essentials (07/19/2026 to 08/19/2026)`. Name the file after the month the period starts in.
+
 For each invoice in the target quarter:
-1. Click the `...` (Open menu) button on the row
+1. Click the `...` (Open menu) button on the row (the last `button` in the row)
 2. Click **Invoice** — this opens a new tab with the invoice as a web page
 3. Switch to the new tab, wait for `networkidle`, then hide any modals/overlays:
    ```js
