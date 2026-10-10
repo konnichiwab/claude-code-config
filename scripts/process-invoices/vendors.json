@@ -1,6 +1,11 @@
 {
   "verkoop_senders": [
-    "leverancierbeheer@randstadgroep.nl"
+    "leverancierbeheer@randstadgroep.nl",
+    "servicenl@magnitglobal.com"
   ],
-  "folder_name_overrides": {}
+  "folder_name_overrides": {
+    "RAAD Nootdorp": "_Algemeen",
+    "Randstad": "ABN Amro",
+    "SuperGarant": "ZZP Nederland"
+  }
 }

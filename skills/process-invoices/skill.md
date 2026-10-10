@@ -10,16 +10,22 @@ Process monthly invoices by completing all three sections below in order.
 
 Run:
 ```
-pip show pywin32 pdfplumber
+pip show msal requests pdfplumber
 ```
-If either package is missing, install it: `pip install pywin32 pdfplumber`
+If any package is missing, install it: `pip install msal requests pdfplumber`
 
 ## Step 2 — Extract emails from Outlook
 
-Run the extraction script and capture its output:
+Mail is read through **Microsoft Graph**, not Outlook COM. The user runs the *new* Outlook (`olk.exe`), which has no COM API; COM would launch classic Outlook, whose profile holds an old Source for Quality account and prompts for a login. Never use `win32com` for this.
+
+The scripts sign in as marc.klootwijk@esconline.nl (delegated `Mail.ReadWrite`, Microsoft's Graph CLI public client — no app registration). The token cache is at `%LOCALAPPDATA%\process-invoices\msal_cache.json`. If it has expired, the script opens a browser login — run it in the background and ask the user to sign in. To test sign-in alone: `python graph.py`. The scripts refuse to run against any other mailbox.
+
+Run the extraction script (prints `OUTPUT:<path to extract_output.json>`):
 ```
 python "C:/Users/mjjkl/.claude/scripts/process-invoices/extract.py"
 ```
+
+`build_decisions.py <extract_output.json> <decisions.json>` produces a first-draft decisions file (vendor, date, invoice-vs-receipt PDF). Review it against Step 3 — e.g. it does not skip RAAD's quarterly "Administratie" report pack or GitHub receipts (personal account konnichiwab; ask the user).
 
 Also read the vendor config:
 ```
@@ -45,7 +51,7 @@ For every email in the extracted JSON, determine:
 
 **Vendor name**
 - Derive a short, clean vendor name from `sender_name` or the PDF content (e.g. "Amazon Web Services EMEA SARL" → "AWS", "Microsoft Ireland Operations Limited" → "Microsoft").
-- Check `folder_name_overrides` in vendors.json. If the vendor has an entry there, use that value as the `outlook_folder` (the Outlook subfolder name to move the email into); otherwise use the vendor name itself.
+- Check `folder_name_overrides` in vendors.json. If the vendor has an entry there, use that value as the `outlook_folder` (the Outlook subfolder name to move the email into); otherwise use the vendor name itself (not upper-cased — existing folders match case-insensitively, new ones are created with this exact name). Current overrides: RAAD → `_Algemeen`, Randstad (intermediary for ABN) → `ABN Amro`, SuperGarant → `ZZP Nederland`. Add new ones the user gives you.
 
 ## Step 4 — Present summary for review
 

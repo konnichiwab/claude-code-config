@@ -1,27 +1,20 @@
-import win32com.client
 import json
 import shutil
 import os
 import sys
 
-ACCOUNT_EMAIL = "marc.klootwijk@esconline.nl"
+from graph import Graph
+
+sys.stdout.reconfigure(encoding="utf-8")
+
 DROPBOX_BASE = r"D:\Dropbox\Klootwijk - RAAD\ESC Online"
 
 
-def get_inbox():
-    outlook = win32com.client.Dispatch("Outlook.Application")
-    ns = outlook.GetNamespace("MAPI")
-    for account in ns.Accounts:
-        if account.SmtpAddress.lower() == ACCOUNT_EMAIL:
-            return ns, account.DeliveryStore.GetDefaultFolder(6)
-    return ns, ns.GetDefaultFolder(6)
-
-
-def get_or_create_subfolder(inbox, name):
-    for folder in inbox.Folders:
-        if folder.Name.upper() == name.upper():
-            return folder
-    return inbox.Folders.Add(name)
+def get_or_create_subfolder(g, name):
+    for folder in g.get_all("/me/mailFolders/inbox/childFolders", params={"$select": "id,displayName", "$top": "100"}):
+        if folder["displayName"].upper() == name.upper():
+            return folder["id"]
+    return g.post("/me/mailFolders/inbox/childFolders", {"displayName": name})["id"]
 
 
 def main():
@@ -32,7 +25,7 @@ def main():
     with open(sys.argv[1], encoding="utf-8") as f:
         decisions = json.load(f)
 
-    ns, inbox = get_inbox()
+    g = Graph()
 
     for d in decisions:
         subject = d.get("subject", "unknown")
@@ -70,14 +63,13 @@ def main():
                 shutil.copy2(pdf_source, dest_path)
                 print(f"SAVED: {dest_path}")
 
-            item = ns.GetItemFromID(d["entry_id"])
-            original_subject = item.Subject or ""
-            item.Subject = f"{vendor_upper} - {original_subject}"
-            item.Save()
+            msg_id = d["entry_id"]
+            original_subject = g.get(f"/me/messages/{msg_id}", params={"$select": "subject"}).get("subject") or ""
+            g.patch(f"/me/messages/{msg_id}", {"subject": f"{vendor_upper} - {original_subject}"})
 
-            target_folder = get_or_create_subfolder(inbox, outlook_folder)
-            item.Move(target_folder)
-            print(f"MOVED: '{subject}' → Outlook folder '{outlook_folder}'")
+            target_folder = get_or_create_subfolder(g, outlook_folder)
+            g.post(f"/me/messages/{msg_id}/move", {"destinationId": target_folder})
+            print(f"MOVED: '{subject}' -> Outlook folder '{outlook_folder}'")
 
         except Exception as e:
             print(f"ERROR on '{subject}': {e}")
