@@ -231,3 +231,25 @@ Present the output sections:
 - **PAID PRIVATELY**: listed for the accountant's information.
 
 Also flag any invoice that appears in two quarter folders: a duplicate filed twice, as happened with SendGrid in Q2 and Q3 2026. Ask which copy to keep; normally the copy RAAD has already received stays.
+
+---
+
+## Section E — OpenAI API invoices
+
+OpenAI API credit top-ups (auto-recharge, $10–$30, often many per month) don't email a PDF. They only send "Your OpenAI API account has been funded" with no attachment, so fetch the invoices for the quarter from the billing history. Run this before Section D.
+
+### E1 — Collect the invoice links (needs the user's login)
+
+Open https://platform.openai.com/settings/organization/billing/history in the Playwright browser. The user logs in with the ESC Online account; wait for their confirmation.
+
+Each row is `NUMBER | STATUS | AMOUNT | CREATED ("Aug 29, 2026, 12:13 AM") | View`. The View link is a public Stripe page (`invoice.stripe.com/i/acct_…/live_…`). The list is paged ("Next invoices page" button). With `browser_run_code_unsafe`, loop over the pages and collect `{number, status, amount, date (YYYY-MM-DD), url}`. Store the result as `window.__invoices = {vendor: "OPENAI", invoices: [...]}`. Then write it to disk with `browser_evaluate(() => JSON.stringify(window.__invoices), filename=<tmp>/openai_invoices.json)`; `run_code` has no file access.
+
+### E2 — Download the PDFs (no login needed)
+
+```
+python "C:/Users/mjjkl/.claude/scripts/process-invoices/fetch_stripe_invoices.py" <tmp>/openai_invoices.json 2026 3
+```
+
+This keeps only invoices dated in that quarter and saves them as `Inkoop\Q{n}\OPENAI Invoice-{number}.pdf`. It skips files that already exist, including in `Verwerkt door RAAD`. It resolves each PDF through Stripe's public `invoicedata.stripe.com/invoice_pdf_file_url/{acct}/{token}` endpoint. Clicking "Download invoice" on the Stripe page closes the tab, so don't automate the button.
+
+The script works for any vendor billing through Stripe-hosted invoices. Change `vendor` in the JSON.
