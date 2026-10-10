@@ -40,6 +40,12 @@ For every email in the extracted JSON, determine:
 - If `sender_email` matches any address in `verkoop_senders` in vendors.json → `verkoop`
 - Otherwise → `inkoop`
 
+**Verkoop: only once paid (rule set by the user)**
+- A verkoop invoice is filed only when its payment arrived in the quarter being processed. Unpaid ones stay untouched in the inbox and get picked up in a later quarter. No temp copies are needed, because the email keeps the PDF.
+- Payments come from the bunq MT940 statements in `D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\Bank\Q{n}\*.sta`. A payment matches when the invoice number appears in the credit's description. Randstad writes it as `Betalingskenmerk ESC690000012`.
+- To preview: `python bank.py 2026 3` lists that quarter's incoming payments. Use `bank.credits()` / `bank.find_payment()` to show paid/unpaid in the Step 4 table.
+- If the quarter's `.sta` files aren't in Dropbox yet, ask the user to export them from bunq first.
+
 **Which PDF is the invoice**
 - If there is only one PDF, use it.
 - If there are multiple PDFs, read the filenames and PDF text to identify the invoice (vs receipt, delivery note, packing slip, etc.). Invoices typically show an invoice number, a total amount due, and a payment date/term.
@@ -60,8 +66,9 @@ Show a table:
 | # | Sender | Vendor | Invoice Date | Category | Destination | Invoice PDF | Notes |
 |---|--------|--------|--------------|----------|-------------|-------------|-------|
 | 1 | aws@amazon.com | AWS | 2026-05-15 | Inkoop | 2026/Inkoop/Q2 | invoice.pdf | |
+| 2 | leverancierbeheer@randstadgroep.nl | Randstad | 2026-09-22 | Verkoop | stays in inbox | INV_…021_1.pdf | unpaid in Q3 |
 
-Use **Notes** to flag: uncertain date, ambiguous PDF selection, unknown vendor, or any other issue.
+Use **Notes** to flag: uncertain date, ambiguous PDF selection, unknown vendor, verkoop paid date or "unpaid", or any other issue.
 
 Ask the user: **"Does this look correct? Reply YES to proceed, or tell me what needs adjusting."**
 
@@ -80,17 +87,22 @@ Once the user confirms, build a decisions JSON array with one object per email:
     "invoice_date": "2026-05-15",
     "category": "inkoop",
     "pdf_source_path": "C:/...temp path from extract output...",
-    "pdf_filename": "invoice.pdf"
+    "pdf_filename": "invoice.pdf",
+    "invoice_number": "ESC690000012"
   }
 ]
 ```
+
+`invoice_number` is only used for verkoop. If it's missing, the script looks for `ESC69xxxxxxx` in the filename or subject.
 
 For skipped or flagged items use `"action": "skip"`.
 
 Write the decisions to a temp file (e.g. `%TEMP%/process_invoices_decisions.json`), then run:
 ```
-python "C:/Users/mjjkl/.claude/scripts/process-invoices/execute.py" "<path_to_decisions_json>"
+python "C:/Users/mjjkl/.claude/scripts/process-invoices/execute.py" "<path_to_decisions_json>" --bank-quarter 2026Q3
 ```
+
+`--bank-quarter` is the quarter being processed. It's required whenever the decisions include verkoop invoices to file.
 
 ## Step 6 — Report results
 
@@ -99,6 +111,7 @@ Show which emails were successfully filed and moved, and list any errors so the 
 ---
 
 **What the execute script does per email:**
+- For verkoop, checks first for a payment in the `--bank-quarter` bank statements. If there is none, it prints `UNPAID … (left in inbox)` and leaves the email alone. If paid, the PDF goes to `{payment year}\Verkoop\`.
 - Copies the invoice PDF to `D:\Dropbox\Klootwijk - RAAD\ESC Online\{year}\{Inkoop\Q{n} or Verkoop}\` with filename `VENDOR originalfilename.pdf`
 - Renames the Outlook email subject to `VENDOR - original subject`
 - Moves the email from Inbox to the vendor subfolder (creates the subfolder if it doesn't exist yet)
